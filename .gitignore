@@ -12,3 +12,5 @@ __pycache__/
 *.ckpt
 .env
 *.egg-info/
+env.secrets
+*.secrets
