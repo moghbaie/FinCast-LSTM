@@ -1,42 +1,36 @@
-# STATUS / handoff (updated 2026-11-13)
+# STATUS / handoff (updated 2026-11-14)
 
 ## Done
-- Read the paper. `paper_analysis.md` is complete (page refs follow the discussion-paper numbering).
-- `plan.md` updated with the approved decisions A1–A18 (§0) and the revised milestone order.
-- `CLAUDE.md` rewritten for this project (leakage rules plus the faithful-mode exceptions).
-- M0 (partial):
-  - Directory skeleton, `pyproject.toml`, `.venv` with torch 2.14.1+cu126.
-  - `fincast.models.lstm.PaperLSTM`: variational per-gate dropout, keras-style init, 2,752
-    trainable params; eval mode uses cuDNN.
-  - `fincast.utils.provenance`: seeds and run manifest.
-  - `scripts/benchmark_lstm.py`.
-  - Benchmark results: `results/benchmarks/m0_benchmark.md`. With CUDA graphs + `unbind`, an
-    epoch takes ≈ 25 s at batch 512 on the GTX 1650.
+- Plan approved with decisions A1–A18 (`plan.md` §0). Milestone order: M0 → M1 → M1b → M2 → M3a
+  baselines → M3b one LSTM → M8a freeze (≤ 2026-12-21) → full A/B, H = 5/20, multi-seed → M7 → M9.
+- **M0 done.**
+  - Trainer: CUDA-graph step, early stopping, checkpoint/resume (tested).
+  - `PaperLSTM` with 2,752 trainable params.
+  - Benchmark: GTX 1650 18 s/epoch at batch 512, 165 s at batch 32.
+  - Colab notebook `notebooks/00_colab_setup_benchmark.ipynb`, README, `deviations.md`, pinned
+    `requirements.txt`.
+- **M1 first pass done.** See `data_audit.md`.
+  - Membership from fja05680, 1996 → 2026-08-18.
+  - Yahoo prices for 759 of 1,209 tickers. Coverage 56 % of constituent-days in 1996–2015 and
+    88 % in 2016–2026.
+  - 6 series excluded. The clean panel is `data/processed/adjclose_yahoo_clean.parquet`.
+  - Ken French factors to 2026-09-30.
+  - Tiingo cross-check of 25 tickers in `results/data_audit/crosscheck_tiingo.csv`.
+- Checks pass: ruff, mypy, 10 unit tests, 1 GPU test, 5 data tests.
 
-## Next (M0 remainder)
-1. Trainer with CUDA-graph step, early stopping (patience 10, restore best), checkpoint/resume
-   to a configurable dir (Google Drive on Colab).
-2. Tests: param count 2,752; custom loop without masks == cuDNN output; seed determinism.
-   Run ruff, mypy and pytest.
-3. `requirements.txt` (pinned from `.venv`), `README.md`, `deviations.md`, Colab notebook
-   `notebooks/00_colab_setup_benchmark.ipynb` (mount Drive, clone private repo, `pip install -e`,
-   run benchmark).
-4. Run the benchmark on Colab (needs the user to run the notebook).
+## Waiting on the user
+- Run the Colab notebook and paste the benchmark JSON.
+- Approve the M1b approach and its Tiingo quota use (≈ 475 of 500 symbols this month).
+- Decide whether to accept a free-data Phase A with trading from 1999 and heavy survivorship
+  bias, or approve a paid source.
 
-## Next (M1: free-data audit)
-- Membership: fja05680/sp500 GitHub (≈1996+); Wikipedia current list + changes table.
-- Prices: yfinance (primary free source); Stooq cross-check; Tiingo needs the user's API key
-  (ask). Measure the share of historical constituents with prices per year (survivorship gap).
-- Ken French daily factors (MKT, RF, momentum, short-term reversal) for evaluation only.
-- Write `data_audit.md` and `scripts/audit_data.py`; add a validation suite plus
-  `pytest -m data`.
+## Next: M1b data repair
+1. Tiingo gap-fill for 191 candidate tickers (`uncovered_spells.csv`, `fillable_by_tiingo > 0`).
+2. Rename map via company names (Tiingo metadata, Wikipedia changes).
+3. Name-check the inside-spell series (AEE, FE, FOXA, AVB, …) and GNW.
+4. Add index changes after 2026-08-18 from Wikipedia or S&P.
 
-## Gate report owed to the user before M2
-Actual GPU benchmark (local + Colab), data availability and coverage, and the remaining
-reproduction limitations.
-
-## Notes 2026-11-13 (late)
-- Tiingo key is in env.secrets and works (`fincast.utils.secrets.get_secret`).
-- First probe: Tiingo has metadata for delisted LEH, ENRNQ and WCOEQ but no price dates
-  (start/end = None), so the free tier likely lacks delisted price history. Confirm in M1
-  across all historical constituents.
+## Gotchas
+- Windows: always pass `encoding="utf-8"` in Python file I/O (cp1252 corrupted a file once).
+- The cuDNN eval path uses ≈ 0.5 MB per row, so keep the eval batch ≤ 2048 on the 4 GB GPU.
+- Tiingo free tier: 500 unique symbols/month, 50 req/h. `TiingoClient` throttles to 48/h.

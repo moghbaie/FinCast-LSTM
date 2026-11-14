@@ -23,3 +23,8 @@ Phases B and C; *engineering* = a different implementation that should not chang
 | D-14 | Seeds | One run per period (implicit) | 1 seed for debugging, 5 for final H = 1, 3 for H = 5/20 (A12) | assumption | all | — |
 | D-15 | Eval-mode kernel | keras | Fused cuDNN LSTM in eval mode (equal to our custom loop to 1e-10 in float64) | engineering | all | done |
 | D-16 | Training speed-up | — | CUDA-graph capture of the training step (same maths) | engineering | all | done |
+| D-17 | Universe period | Month-end lists Dec 1989 – Sep 2015; trading from Dec 1992 | Free membership starts 1996-01-02, so Phase A trading can start ≈ 1999. 1992–1998 cannot be replicated; comparison is restricted to overlapping years | forced | A | M1 |
+| D-18 | Membership granularity | Month-end lists ("constituent in the subsequent month") | Daily change file; faithful mode samples it at month-end, strict mode uses daily membership | assumption | A | M2 |
+| D-19 | Price series | Thomson Reuters total return index | Yahoo `Adj Close` (split and dividend adjusted) ≈ total return; cross-checked against Tiingo `adjClose` | forced | all | M1 |
+| D-20 | Data exclusions | Not described | Series failing hard checks or with ≥ 5 membership days of \|r\| > 50 % are excluded (`excluded_series.csv`) | correction | all | M1 |
+| D-21 | Survivorship | Survivor-bias-free universe | Free data lacks most delisted firms: 35–70 % of constituent-days covered in 1996–2015. **Residual survivorship bias**, quantified per year in `data_audit.md` | forced | A, B | M1 |

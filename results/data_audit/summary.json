@@ -1,0 +1,52 @@
+{
+ "generated_utc": "2026-11-14T05:17:53+00:00",
+ "membership_source": "data\\raw\\fja05680_sp500\\2026-11-14",
+ "membership_first": "1996-01-02",
+ "membership_last_change": "2026-08-18",
+ "unique_tickers": 1209,
+ "spells": 1262,
+ "daily_size_min_med_max": [
+  487,
+  497,
+  507
+ ],
+ "yahoo_snapshot": "data\\raw\\yahoo\\2026-11-14",
+ "yahoo_tickers_with_data": 759,
+ "yahoo_tickers_missing": 450,
+ "audit_end": "2026-11-13",
+ "coverage_member_days": {
+  "A_1996_2015": 0.5603191692485916,
+  "B_2016_2026": 0.8840127393155882
+ },
+ "yahoo_late_start_tickers": 149,
+ "excluded_series": [
+  "CPWR",
+  "DEC",
+  "EP",
+  "GNW",
+  "MCIC",
+  "PARA"
+ ],
+ "validation": {
+  "series": 759,
+  "passed_hard_checks": 754,
+  "with_extreme_returns": 100,
+  "with_missing_sessions": 3,
+  "with_stale_runs": 289,
+  "with_non_session_dates": 0
+ },
+ "tiingo_fillable_member_days": 500852,
+ "tiingo_fill_candidate_tickers": 194,
+ "french": {
+  "first": "1926-01-26",
+  "last": "2026-09-30",
+  "columns": [
+   "Mkt-RF",
+   "SMB",
+   "HML",
+   "RF",
+   "Mom",
+   "ST_Rev"
+  ]
+ }
+}

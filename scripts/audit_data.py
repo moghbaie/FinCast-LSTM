@@ -93,11 +93,24 @@ def main() -> None:
     sizes = member.sum(1)
 
     # --- Yahoo validation + availability
-    reports = [validate.validate_series(t, yahoo[t], sessions) for t in yahoo]
+    first_price_day = min(df.index.min() for df in yahoo.values())
+    all_sessions = validate.nyse_sessions(str(first_price_day.date()), str(end.date()))
+    reports = [validate.validate_series(t, yahoo[t].loc[:end], all_sessions) for t in yahoo]
     rep = validate.reports_frame(reports)
     rep.to_csv(OUT / "series_validation.csv", index=False)
     adj = pd.DataFrame({t: df["Adj Close"] for t, df in yahoo.items()}).reindex(sessions)
     adj.to_parquet(PROCESSED / "adjclose_yahoo.parquet")
+    # Exclusions: hard-check failures (non-positive prices, duplicates, non-session dates) and
+    # identity suspects (>= 5 membership days with |r| > 50 %: wrong company / bad adjustment).
+    mem_y = member.reindex(columns=adj.columns, fill_value=False)
+    extreme = ((adj.pct_change(fill_method=None).abs() > 0.5) & mem_y).sum()
+    hard = rep.set_index("ticker")[["n_duplicate_dates", "n_non_session_dates", "n_nonpositive_close"]].sum(1) > 0
+    excluded = pd.DataFrame({"hard_check_failure": hard, "extreme_member_days": extreme})
+    excluded = excluded[excluded["hard_check_failure"] | (excluded["extreme_member_days"] >= 5)]
+    excluded.index.name = "ticker"
+    excluded.to_csv(OUT / "excluded_series.csv")
+    adj = adj.drop(columns=excluded.index)
+    adj.to_parquet(PROCESSED / "adjclose_yahoo_clean.parquet")
     avail_y = adj.notna().reindex(columns=member.columns, fill_value=False)
     avail_t = tiingo_meta_availability(sessions, list(member.columns))
 
@@ -126,7 +139,7 @@ def main() -> None:
 
     # --- partial-history flag: Yahoo series starts after the ticker's first membership day
     first_member = member.idxmax()
-    first_price = pd.Series({t: df.index.min() for t, df in yahoo.items()})
+    first_price = pd.Series({t: yahoo[t].index.min() for t in adj.columns})
     late_start = (first_price > first_member.reindex(first_price.index)).sum()
 
     ff = load_french_daily(latest("ken_french"))
@@ -152,6 +165,7 @@ def main() -> None:
             k: float(covered[v].sum() / total[v].sum()) for k, v in period.items()
         },
         "yahoo_late_start_tickers": int(late_start),
+        "excluded_series": sorted(excluded.index.tolist()),
         "validation": {
             "series": len(rep),
             "passed_hard_checks": int(rep["passed"].sum()),

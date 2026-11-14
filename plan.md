@@ -28,7 +28,7 @@ beyond feasibility benchmarks waits for the M0/M1 gate report.
 
 ### Revised milestone order (supersedes the order in §5)
 
-M0 environment + git + benchmark → M1 free-data acquisition + audit → M2 pipeline core + leakage
+M0 environment + git + benchmark → M1 free-data acquisition + audit → **M1b data repair (Tiingo gap-fill, rename map, identity review, post-2026-08-18 index changes)** → M2 pipeline core + leakage
 tests → M3a simple baselines (naive, reversal, momentum, LOG, RF, XGBoost) → M3b one working LSTM
 (1 seed) → **M8a freeze primary 2027 model/protocol (target ≤ 2026-12-21)** → M5 full Phase A
 (faithful/strict), M6 Phase B, H = 5/20, GRU/DNN, multi-seed → M7 uncertainty → M9 live 2027.
