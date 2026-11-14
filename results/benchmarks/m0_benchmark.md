@@ -39,8 +39,8 @@ Findings:
 | cuDNN input dropout only (comparator) | 512 | 0.007 | 2.9 | 0.21 s | 1.1 GB |
 
 - The evaluation batch is now 2048: the cuDNN evaluation path uses about 0.5 MB per row, so a
-  batch of 8192 spilled past the 4 GB card. That explains the earlier 4.2–4.4 GB readings.
-- Estimate per LSTM fit, assuming 20–60 epochs to early stopping (not yet measured on real
-  data): about 6–18 min at batch 512 and about 1–3 h at batch 32. The 23-period replication with
-  1 seed would take about 2.5–7 GPU-hours on this laptop.
+  batch of 8192 spilled past the 4 GB card. That explains the earlier 4.2â€“4.4 GB readings.
+- Estimate per LSTM fit, assuming 20â€“60 epochs to early stopping (not yet measured on real
+  data): about 6â€“18 min at batch 512 and about 1â€“3 h at batch 32. The 23-period replication with
+  1 seed would take about 2.5â€“7 GPU-hours on this laptop.
 - The Colab rows are pending: the user needs to run `notebooks/00_colab_setup_benchmark.ipynb`.
