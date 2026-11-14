@@ -1,0 +1,78 @@
+{
+  "label": "local_gtx1650",
+  "n_train": 204000,
+  "n_val": 51000,
+  "seq_len": 240,
+  "device": "cuda",
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+    "packages": {
+      "numpy": "2.5.4",
+      "pandas": "3.1.1",
+      "torch": "2.14.1+cu126",
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "statsmodels": "0.15.0",
+      "scipy": "1.18.1",
+      "yfinance": "1.8.0",
+      "pandas_market_calendars": "5.6.0"
+    },
+    "colab": false,
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce GTX 1650 with Max-Q Design",
+    "cudnn": 91002,
+    "gpu_mem_gb": 4.0
+  },
+  "results": [
+    {
+      "model": "paper_variational",
+      "batch": 32,
+      "sec_per_step": 1.06511,
+      "sec_per_epoch_train": 6790.1,
+      "sec_val_pass": 2.74,
+      "peak_mem_mb": 4410
+    },
+    {
+      "model": "paper_variational",
+      "batch": 128,
+      "sec_per_step": 1.34935,
+      "sec_per_epoch_train": 2150.9,
+      "sec_val_pass": 0.23,
+      "peak_mem_mb": 4410
+    },
+    {
+      "model": "paper_variational",
+      "batch": 512,
+      "sec_per_step": 0.93753,
+      "sec_per_epoch_train": 374.1,
+      "sec_val_pass": 0.16,
+      "peak_mem_mb": 4410
+    },
+    {
+      "model": "paper_variational",
+      "batch": 2048,
+      "sec_per_step": 3.39386,
+      "sec_per_epoch_train": 339.4,
+      "sec_val_pass": 0.15,
+      "peak_mem_mb": 4410
+    },
+    {
+      "model": "cudnn_input_dropout",
+      "batch": 32,
+      "sec_per_step": 0.00498,
+      "sec_per_epoch_train": 31.7,
+      "sec_val_pass": 0.15,
+      "peak_mem_mb": 4410
+    },
+    {
+      "model": "cudnn_input_dropout",
+      "batch": 512,
+      "sec_per_step": 0.00729,
+      "sec_per_epoch_train": 2.9,
+      "sec_val_pass": 0.16,
+      "peak_mem_mb": 4410
+    }
+  ]
+}

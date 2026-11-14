@@ -1,0 +1,14 @@
+data/
+runs/
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.ipynb_checkpoints
+.claude/settings.local.json
+*.pt
+*.ckpt
+.env
+*.egg-info/

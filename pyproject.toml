@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fincast"
+version = "0.1.0"
+description = "Reproduction and extension of Fischer & Krauss (2018) LSTM stock-direction forecasts"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "pyarrow>=14",
+    "pyyaml>=6",
+    "requests>=2.31",
+    "pandas_market_calendars>=4.4",
+]
+
+[project.optional-dependencies]
+data = ["yfinance>=0.2.40", "lxml>=5"]
+models = ["torch>=2.2", "scikit-learn>=1.4", "xgboost>=2.0", "statsmodels>=0.14", "scipy>=1.11"]
+viz = ["matplotlib>=3.8"]
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "pandas-stubs", "types-PyYAML", "types-requests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "NPY"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "data: tests that need downloaded data in data/",
+    "gpu: tests that need a CUDA device",
+]
+addopts = "-m 'not data and not gpu'"
