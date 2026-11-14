@@ -34,3 +34,9 @@
 ## Gate report owed to the user before M2
 Actual GPU benchmark (local + Colab), data availability and coverage, and the remaining
 reproduction limitations.
+
+## Notes 2026-11-13 (late)
+- Tiingo key is in env.secrets and works (`fincast.utils.secrets.get_secret`).
+- First probe: Tiingo has metadata for delisted LEH, ENRNQ and WCOEQ but no price dates
+  (start/end = None), so the free tier likely lacks delisted price history. Confirm in M1
+  across all historical constituents.
