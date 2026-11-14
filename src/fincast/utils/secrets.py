@@ -28,7 +28,7 @@ def _from_file(name: str, path: Path) -> str | None:
 
 def _from_colab(name: str) -> str | None:
     try:
-        from google.colab import userdata  # type: ignore[import-not-found]
+        from google.colab import userdata
     except ImportError:
         return None
     try:

@@ -66,23 +66,28 @@ class PaperLSTM(nn.Module):
         self.dropout = dropout
         self.recurrent_dropout = recurrent_dropout
         self.lstm = nn.LSTM(n_features, hidden, batch_first=True)
-        self.lstm.bias_hh_l0.requires_grad_(False)
+        self._w("bias_hh_l0").requires_grad_(False)
         self.head = nn.Linear(hidden, n_classes)
         self.reset_parameters()
+
+    def _w(self, name: str) -> Tensor:
+        """Typed access to nn.LSTM parameters (weight_ih_l0, weight_hh_l0, bias_ih_l0, ...)."""
+        t: Tensor = getattr(self.lstm, name)
+        return t
 
     def reset_parameters(self) -> None:
         h = self.hidden
         with torch.no_grad():
             # Keras kernel shape (in, 4h): glorot over fan_in=in, fan_out=4h.
             limit = math.sqrt(6.0 / (self.n_features + _N_GATES * h))
-            self.lstm.weight_ih_l0.uniform_(-limit, limit)
+            self._w("weight_ih_l0").uniform_(-limit, limit)
             # Keras recurrent kernel (h, 4h) orthogonal.
             w = torch.empty(h, _N_GATES * h)
             nn.init.orthogonal_(w)
-            self.lstm.weight_hh_l0.copy_(w.t())
-            self.lstm.bias_ih_l0.zero_()
-            self.lstm.bias_ih_l0[h : 2 * h] = 1.0  # forget gate
-            self.lstm.bias_hh_l0.zero_()
+            self._w("weight_hh_l0").copy_(w.t())
+            self._w("bias_ih_l0").zero_()
+            self._w("bias_ih_l0")[h : 2 * h] = 1.0  # forget gate
+            self._w("bias_hh_l0").zero_()
             lim = math.sqrt(6.0 / (h + self.head.out_features))
             self.head.weight.uniform_(-lim, lim)
             self.head.bias.zero_()
@@ -108,15 +113,19 @@ class PaperLSTM(nn.Module):
         if not use_masks:
             out, _ = self.lstm(x)
             return self.head(out[:, -1])
-        b, t_len, f = x.shape
+        mask_x, mask_h = self._masks(x.shape[0], x)
+        return self.loop_forward(x, mask_x, mask_h)
+
+    def loop_forward(self, x: Tensor, mask_x: Tensor, mask_h: Tensor) -> Tensor:
+        """Custom recurrence with given masks (B,4,F) and (B,4,H). Ones = no dropout."""
+        f = x.shape[2]
         h = self.hidden
-        mask_x, mask_h = self._masks(b, x)
-        w_ih = self.lstm.weight_ih_l0.view(_N_GATES, h, f)
-        bias = (self.lstm.bias_ih_l0 + self.lstm.bias_hh_l0).view(_N_GATES, h)
+        w_ih = self._w("weight_ih_l0").view(_N_GATES, h, f)
+        bias = (self._w("bias_ih_l0") + self._w("bias_hh_l0")).view(_N_GATES, h)
         # per-gate masked inputs: (B,T,4,F) x (4,H,F) -> (B,T,4,H)
         xm = x.unsqueeze(2) * mask_x.unsqueeze(1)
         xw = torch.einsum("btgf,ghf->btgh", xm, w_ih) + bias
-        w_hh = self.lstm.weight_hh_l0.view(_N_GATES, h, h)
+        w_hh = self._w("weight_hh_l0").view(_N_GATES, h, h)
         h_last = _variational_lstm_loop(xw, w_hh, mask_h)
         return self.head(h_last)
 
