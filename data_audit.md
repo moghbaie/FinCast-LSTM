@@ -111,9 +111,29 @@ Reused tickers can map a historical constituent to a different, later company:
 
 ## 6. Cross-check against Tiingo
 
-*Pending (running).* 25 randomly chosen tickers (seed 0) with more than 1,000 days. Metrics:
-share of days where the two daily returns differ by less than 1 bp and less than 10 bp, the
-largest difference, and the correlation.
+We compared daily adjusted returns for 25 randomly chosen tickers (seed 0, each with more than
+1,000 days); results are in `crosscheck_tiingo.csv`. Tiingo had all 25.
+
+| Metric (median over 25 tickers) | Value |
+|---|---|
+| Days where the two returns differ by < 1 bp | 93 % (range 72–100 %) |
+| Days where they differ by < 10 bp | 99 % (range 88–100 %) |
+| Correlation of daily returns | 0.997 (min 0.946, IRM) |
+| Mean daily return difference | < 0.06 bp for most tickers; largest 0.22 bp (IRM) and 0.14 bp (WY) |
+
+- **Disagreements cluster in 1996–2000.** The largest differences fall in 1996–1997 for ADBE,
+  APH, CCL, DDS, L, SO, VFC and WAT. This is consistent with fractional-tick (1/16 $) prices
+  rounded differently by each vendor, and possibly different dividend dates. Before decimalisation
+  in 2001, daily returns of low-priced stocks carry vendor-specific rounding noise of a few bp.
+  This matters for a model that reads daily returns.
+- **Isolated large differences:** IRM 2006-02-03 (50 %), ADBE 1996-01-08 (30 %), WAT
+  1996-10-01 (13 %), APH, DDS. These are probably a split or spin-off adjusted on different dates.
+  They are on the M1b review list.
+- **Ticker identity is visible here too.** `MRSH` (Marsh McLennan's new ticker) has Yahoo history
+  back to 1996, which confirms the rename problem behind the missing `MMC` spell. Yahoo's `STI`
+  is a recent listing, not SunTrust; it has no overlap with SunTrust's membership, so it is
+  harmless.
+- After 2001 the two vendors agree closely: mostly > 99 % of days within 10 bp, correlation ≥ 0.999.
 
 ## 7. Factor data
 
