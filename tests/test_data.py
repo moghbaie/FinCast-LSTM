@@ -32,7 +32,7 @@ def adjclose() -> pd.DataFrame:
 
 
 def test_index_size_is_plausible(membership: pd.DataFrame) -> None:
-    n = membership.sum(1)
+    n = membership.sum(axis=1)
     assert n.between(480, 510).all(), n[~n.between(480, 510)]
 
 
@@ -40,7 +40,8 @@ def test_membership_on_nyse_sessions_only(membership: pd.DataFrame) -> None:
     from fincast.data.validate import nyse_sessions
 
     s = nyse_sessions(str(membership.index[0].date()), str(membership.index[-1].date()))
-    assert membership.index.equals(s)
+    # Compare as ns: parquet written by pandas 3 stores datetime64[us], pandas 2 builds [ns].
+    assert membership.index.as_unit("ns").equals(s.as_unit("ns"))
 
 
 def test_prices_aligned_and_positive(adjclose: pd.DataFrame, membership: pd.DataFrame) -> None:

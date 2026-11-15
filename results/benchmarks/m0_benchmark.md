@@ -43,4 +43,27 @@ Findings:
 - Estimate per LSTM fit, assuming 20–60 epochs to early stopping (not yet measured on real
   data): about 6–18 min at batch 512 and about 1–3 h at batch 32. The 23-period replication with
   1 seed would take about 2.5–7 GPU-hours on this laptop.
-- The Colab rows are pending: the user needs to run `notebooks/00_colab_setup_benchmark.ipynb`.
+
+## Colab free tier: Tesla T4 (15 GB), Python 3.13, run 2026-11-15
+
+Measured with `scripts/benchmark_lstm.py` from `notebooks/00_colab_setup_benchmark.ipynb` (label
+`colab_tesla_t4_v1`, JSON kept in the user's Google Drive). Same workload as above.
+
+| Implementation | Batch | s/step | s/epoch | Validation pass (51k) | Peak GPU memory |
+|---|---|---|---|---|---|
+| Paper LSTM, CUDA graph | 32 | 0.027 | **175** | 0.84 s | 0.37 GB |
+| Paper LSTM, CUDA graph | 128 | 0.027 | 42.5 | 0.09 s | 0.38 GB |
+| Paper LSTM, CUDA graph | 512 | 0.034 | **13.6** | 0.09 s | 0.40 GB |
+| Paper LSTM, CUDA graph | 2048 | 0.078 | 7.8 | 0.10 s | 0.80 GB |
+| cuDNN input dropout only (comparator) | 512 | 0.004 | 1.6 | 0.11 s | 0.42 GB |
+
+- At batch 512 the T4 is only about 1.3× faster than the laptop (13.6 vs 18 s/epoch). The
+  sequential 240-step loop is bound by kernel-launch latency, not GPU compute, so a bigger GPU
+  (A100) would probably help little. Paid Colab is **not** justified by these numbers (A1).
+- Estimate per fit at batch 512, assuming 20–60 epochs: about 4.5–14 min. Phase A with 23 periods
+  ≈ 1.7–5 GPU-hours per seed; 5 seeds ≈ 9–26 h, which has to be split across free-tier sessions
+  (resumable checkpoints).
+- Batch 32 costs about the same per epoch on both GPUs (≈ 3 min), so the A5 comparison stays
+  limited to 2–3 periods.
+- Caveat: this run happened after the install had upgraded pandas to 3.1.1. That does not affect
+  the torch benchmark, but the install cell now pins Colab's preinstalled versions.

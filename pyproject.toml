@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fincast"
 version = "0.1.0"
 description = "Reproduction and extension of Fischer & Krauss (2018) LSTM stock-direction forecasts"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",
     "pandas>=2.1",
@@ -27,7 +27,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "NPY"]

@@ -104,7 +104,8 @@ def main() -> None:
     # identity suspects (>= 5 membership days with |r| > 50 %: wrong company / bad adjustment).
     mem_y = member.reindex(columns=adj.columns, fill_value=False)
     extreme = ((adj.pct_change(fill_method=None).abs() > 0.5) & mem_y).sum()
-    hard = rep.set_index("ticker")[["n_duplicate_dates", "n_non_session_dates", "n_nonpositive_close"]].sum(1) > 0
+    hard_cols = ["n_duplicate_dates", "n_non_session_dates", "n_nonpositive_close"]
+    hard = rep.set_index("ticker")[hard_cols].sum(axis=1) > 0
     excluded = pd.DataFrame({"hard_check_failure": hard, "extreme_member_days": extreme})
     excluded = excluded[excluded["hard_check_failure"] | (excluded["extreme_member_days"] >= 5)]
     excluded.index.name = "ticker"
