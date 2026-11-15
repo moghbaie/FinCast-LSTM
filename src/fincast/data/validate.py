@@ -74,10 +74,7 @@ def validate_series(ticker: str, df: pd.DataFrame, sessions: pd.DatetimeIndex) -
         passed=False,
     )
     rep.passed = (
-        dup == 0
-        and rep.n_nonpositive_close == 0
-        and rep.n_nan_adjclose == 0
-        and non_session == 0
+        dup == 0 and rep.n_nonpositive_close == 0 and rep.n_nan_adjclose == 0 and non_session == 0
     )
     return rep
 

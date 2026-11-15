@@ -1,14 +1,14 @@
 """Download raw data from free sources into immutable, manifest-tracked folders.
 
-Layout: data/raw/<source>/<download_date>/<files> plus data/raw/<source>/<download_date>/manifest.json
-with URL, UTC download time, SHA-256 and byte size for every file. Existing files are never
+Layout: data/raw/<source>/<download_date>/<files> plus a manifest.json in the same folder, with
+URL, UTC download time, SHA-256 and byte size for every file. Existing files are never
 overwritten: re-running on the same day skips them (resumable downloads).
 
 Sources (see data_audit.md for licences and limitations):
 - fja05680/sp500 (MIT): historical S&P 500 membership 1996-, pinned to a git commit.
-- Ken French data library: daily Fama-French 3 factors, momentum, short-term reversal (evaluation only).
-- Tiingo supported_tickers.zip: master list of tickers with first/last price dates (free file, no API quota).
-- Tiingo EOD API: daily OHLCV + adjClose (free tier: 500 unique symbols/month, 50 req/h, 1000 req/day).
+- Ken French data library: daily FF3 factors, momentum, short-term reversal (evaluation only).
+- Tiingo supported_tickers.zip: all tickers with first/last price dates (free file, no API quota).
+- Tiingo EOD API: daily OHLCV + adjClose (free: 500 unique symbols/month, 50 req/h, 1000 req/day).
 - Yahoo Finance via yfinance: daily OHLCV, Adj Close (unofficial API; current listings only).
 """
 
@@ -21,7 +21,6 @@ from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
-
 from urllib.parse import quote
 
 import pandas as pd
@@ -58,7 +57,9 @@ def snapshot_dir(source: str, day: date | None = None, root: Path = RAW_ROOT) ->
     return d
 
 
-def _record(folder: Path, name: str, url: str, content: bytes, extra: dict[str, Any] | None = None) -> None:
+def _record(
+    folder: Path, name: str, url: str, content: bytes, extra: dict[str, Any] | None = None
+) -> None:
     mpath = folder / "manifest.json"
     manifest = json.loads(mpath.read_text(encoding="utf-8")) if mpath.exists() else {"files": {}}
     manifest["files"][name] = {
@@ -133,26 +134,44 @@ class TiingoClient:
         params = {"startDate": start, "format": "csv", "resampleFreq": "daily"}
         if end:
             params["endDate"] = end
-        r = requests.get(
-            f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
-            params=params,
-            headers=self.headers,
-            timeout=120,
-        )
-        self._last = time.monotonic()
+        for attempt in range(5):
+            r = requests.get(
+                f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
+                params=params,
+                headers=self.headers,
+                timeout=120,
+            )
+            self._last = time.monotonic()
+            if r.status_code != 429:
+                break
+            time.sleep(600 * (attempt + 1))  # hourly quota hit: back off, then retry
         if r.status_code == 404:
             return b""
         r.raise_for_status()
         return r.content
 
 
-def fetch_tiingo_prices(tickers: Iterable[str], client: TiingoClient | None = None) -> Path:
+def fetch_tiingo_prices(
+    tickers: Iterable[str],
+    client: TiingoClient | None = None,
+    day: date | None = None,
+    log: bool = False,
+) -> Path:
+    """Download full daily history per ticker into one snapshot folder (resumable).
+
+    Pass `day` to keep a long run (it can cross UTC midnight) in a single snapshot folder.
+    """
     client = client or TiingoClient()
-    folder = snapshot_dir("tiingo_eod")
-    for t in tickers:
+    folder = snapshot_dir("tiingo_eod", day)
+    todo = [
+        t
+        for t in tickers
+        if not (folder / f"{t}.csv").exists() and not (folder / f"{t}.missing").exists()
+    ]
+    for i, t in enumerate(todo, 1):
         name = f"{t}.csv"
-        if (folder / name).exists() or (folder / f"{t}.missing").exists():
-            continue
+        if log:
+            print(f"[{datetime.now(UTC):%H:%M:%S}Z] {i}/{len(todo)} {t}", flush=True)
         content = client.prices(t)
         if not content.strip() or content.strip().startswith(b"[]"):
             (folder / f"{t}.missing").write_text("no data", encoding="utf-8")
@@ -192,7 +211,11 @@ def fetch_yahoo_prices(
             threads=True,
         )
         for ys, t in sym.items():
-            sub = df[ys] if isinstance(df.columns, pd.MultiIndex) and ys in df.columns.get_level_values(0) else None
+            sub = (
+                df[ys]
+                if isinstance(df.columns, pd.MultiIndex) and ys in df.columns.get_level_values(0)
+                else None
+            )
             if sub is None or sub.dropna(how="all").empty:
                 (folder / f"{t}.missing").write_text("no data", encoding="utf-8")
                 continue

@@ -32,7 +32,9 @@ def members_on(changes: pd.DataFrame, day: pd.Timestamp | str) -> frozenset[str]
     ts = pd.Timestamp(day)
     idx = int(np.searchsorted(changes["date"].to_numpy(), np.datetime64(ts), side="right")) - 1
     if idx < 0:
-        raise ValueError(f"{ts.date()} is before the first membership list ({changes['date'][0].date()})")
+        raise ValueError(
+            f"{ts.date()} is before the first membership list ({changes['date'][0].date()})"
+        )
     return frozenset(changes["members"].iloc[idx])
 
 
@@ -49,7 +51,7 @@ def membership_matrix(changes: pd.DataFrame, days: pd.DatetimeIndex) -> pd.DataF
 
 
 def membership_intervals(changes: pd.DataFrame, end: pd.Timestamp | None = None) -> pd.DataFrame:
-    """One row per contiguous membership spell: ticker, start, end (exclusive; NaT = still a member)."""
+    """One row per contiguous membership spell: ticker, start, end (exclusive; NaT = member)."""
     rows: list[tuple[str, pd.Timestamp, pd.Timestamp | None]] = []
     open_since: dict[str, pd.Timestamp] = {}
     prev: frozenset[str] = frozenset()
@@ -67,4 +69,6 @@ def membership_intervals(changes: pd.DataFrame, end: pd.Timestamp | None = None)
 
 def month_end_lists(changes: pd.DataFrame, month_ends: pd.DatetimeIndex) -> pd.DataFrame:
     """Paper-style month-end constituent lists (Fischer & Krauss p. 4)."""
-    return pd.DataFrame({"date": month_ends, "members": [members_on(changes, d) for d in month_ends]})
+    return pd.DataFrame(
+        {"date": month_ends, "members": [members_on(changes, d) for d in month_ends]}
+    )
